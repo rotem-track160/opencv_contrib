@@ -82,6 +82,7 @@ public:
 
     void apply(InputArray image, OutputArray fgmask, double learningRate = -1) CV_OVERRIDE;
     void apply(InputArray image, OutputArray fgmask, double learningRate, Stream &stream) CV_OVERRIDE;
+	void applyWithMask(InputArray image, InputArray _imageMask, OutputArray fgmask, double learningRate) {};
 
     void getBackgroundImage(OutputArray backgroundImage) const CV_OVERRIDE;
     void getBackgroundImage(OutputArray backgroundImage, Stream &stream) const CV_OVERRIDE;
@@ -122,8 +123,106 @@ public:
     double getShadowThreshold() const CV_OVERRIDE { return constantsHost_.tau_; }
     void setShadowThreshold(double threshold) CV_OVERRIDE { constantsHost_.tau_ = (float)threshold; }
 
-private:
-    void initialize(Size frameSize, int frameType, Stream &stream);
+		void  getModel(OutputArray model) const
+		{
+			return;
+		}
+
+		void  setModel(OutputArray model)
+		{
+			return;
+		}
+
+		void  getModelUsedModes(OutputArray model) const
+		{
+			bgmodelUsedModes_.download(model);
+			return;
+		}
+
+		void  setModelUsedModes(OutputArray model)
+		{
+			bgmodelUsedModes_.upload(model);
+			return;
+		}
+
+		void  getWeight(OutputArray model) const
+		{
+			weight_.download(model);
+			return;
+		}
+
+		void  setWeight(OutputArray model)
+		{
+			weight_.upload(model);
+			return;
+		}
+
+		void  getVariance(OutputArray model) const
+		{
+			variance_.download(model);
+			return;
+		}
+
+		void  setVariance(OutputArray model)
+		{
+			variance_.upload(model);
+			return;
+		}
+
+		void  getMean(OutputArray model) const
+		{
+			mean_.download(model);
+			return;
+		}
+
+		void  setMean(OutputArray model)
+		{
+			mean_.upload(model);
+			return;
+		}
+
+
+
+		virtual void write(FileStorage& fs) const
+		{
+			writeFormat(fs);
+//			fs << "name" << name_
+				fs << "history" << history_
+				<< "nmixtures" << constantsHost_.nmixtures_
+				<< "backgroundRatio" << constantsHost_.TB_
+				<< "varThreshold" << constantsHost_.Tb_
+				<< "varThresholdGen" << constantsHost_.Tg_
+				<< "varInit" << constantsHost_.varInit_
+				<< "varMin" << constantsHost_.varMin_
+				<< "varMax" << constantsHost_.varMax_
+				<< "complexityReductionThreshold" << ct_
+				<< "detectShadows" << (int)detectShadows_
+				<< "shadowValue" << (int)constantsHost_.shadowVal_
+				<< "shadowThreshold" << constantsHost_.tau_
+				<< "nframes" << nframes_;
+		}
+
+		virtual void read(const FileNode& fn)
+		{
+//			CV_Assert((String)fn["name"] == name_);
+			history_ = (int)fn["history"];
+			constantsHost_.nmixtures_ = (int)fn["nmixtures"];
+			constantsHost_.TB_ = (float)fn["backgroundRatio"];
+			constantsHost_.Tb_ = (float)fn["varThreshold"];
+			constantsHost_.Tg_ = (float)fn["varThresholdGen"];
+			constantsHost_.varInit_ = (float)fn["varInit"];
+			constantsHost_.varMin_ = (float)fn["varMin"];
+			constantsHost_.varMax_ = (float)fn["varMax"];
+			ct_ = (float)fn["complexityReductionThreshold"];
+			detectShadows_ = (int)fn["detectShadows"] != 0;
+			constantsHost_.shadowVal_ = saturate_cast<uchar>((int)fn["shadowValue"]);
+			constantsHost_.tau_ = (float)fn["shadowThreshold"];
+			nframes_ = (int)fn["nframes"];
+
+		}
+
+    private:
+        void initialize(Size frameSize, int frameType, Stream &stream);
 
     Constants constantsHost_;
     Constants *constantsDevice_;
